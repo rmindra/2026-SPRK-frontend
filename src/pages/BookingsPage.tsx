@@ -4,14 +4,11 @@ import { getBookings, updateBookingStatus, deleteBooking } from '@/api/bookings'
 import { getRooms } from '@/api/rooms'
 import type { Booking, Room, BookingStatusType, BookingSortByType } from '@/types'
 import { BookingStatus, BookingSortBy } from '@/types'
+import { formatDateTime } from '@/utils/datetime'
 import { ApiError } from '@/api/client'
 import '@/pages/BookingsPage.css'
 
 const PURPOSE_MAX_LENGTH = 50
-const dateTimeFormatter = new Intl.DateTimeFormat('id-ID', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 const STATUS_LABELS: Record<BookingStatusType, string> = {
   Pending: 'Menunggu',
@@ -26,14 +23,6 @@ const SORT_OPTIONS: { value: BookingSortByType; label: string }[] = [
   { value: BookingSortBy.NameAsc, label: 'Nama A–Z' },
   { value: BookingSortBy.NameDesc, label: 'Nama Z–A' },
 ]
-
-function formatDateTime(iso: string): string {
-  try {
-    return dateTimeFormatter.format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
 
 function statusChangeLabel(status: BookingStatusType): string {
   return STATUS_LABELS[status]

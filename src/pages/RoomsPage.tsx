@@ -3,21 +3,10 @@ import { Link } from 'react-router-dom'
 import { getRooms, deleteRoom } from '@/api/rooms'
 import type { Room } from '@/types'
 import { ApiError } from '@/api/client'
+import { formatDateTime } from '@/utils/datetime'
 import '@/pages/RoomsPage.css'
 
 const DESCRIPTION_MAX_LENGTH = 80
-const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-function formatCreatedAt(iso: string): string {
-  try {
-    return dateFormatter.format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
 
 function truncateDescription(text: string | undefined): string {
   if (!text) return '—'
@@ -151,7 +140,7 @@ export function RoomsPage() {
               </div>
               <div>
                 <dt>Ditambah</dt>
-                <dd>{formatCreatedAt(room.createdAt)}</dd>
+                <dd>{formatDateTime(room.createdAt)}</dd>
               </div>
             </dl>
             <div className="room-card__actions">

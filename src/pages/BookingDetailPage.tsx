@@ -3,27 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getBooking, updateBookingStatus, deleteBooking } from '@/api/bookings'
 import type { Booking, BookingStatusType } from '@/types'
 import { BookingStatus } from '@/types'
+import { formatDateTime } from '@/utils/datetime'
 import { ApiError } from '@/api/client'
 import '@/pages/BookingDetailPage.css'
-
-const dateTimeFormatter = new Intl.DateTimeFormat('id-ID', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 const STATUS_LABELS: Record<BookingStatusType, string> = {
   Pending: 'Menunggu',
   Approved: 'Disetujui',
   Rejected: 'Ditolak',
   Cancelled: 'Dibatalkan',
-}
-
-function formatDateTime(iso: string): string {
-  try {
-    return dateTimeFormatter.format(new Date(iso))
-  } catch {
-    return iso
-  }
 }
 
 export function BookingDetailPage() {

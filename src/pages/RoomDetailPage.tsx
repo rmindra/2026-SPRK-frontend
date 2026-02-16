@@ -3,20 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRoom, deleteRoom } from '@/api/rooms'
 import type { Room } from '@/types'
 import { ApiError } from '@/api/client'
+import { formatDateTime } from '@/utils/datetime'
 import '@/pages/RoomDetailPage.css'
-
-const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-function formatCreatedAt(iso: string): string {
-  try {
-    return dateFormatter.format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
 
 export function RoomDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -166,7 +154,7 @@ export function RoomDetailPage() {
           </div>
           <div>
             <dt>Ditambah</dt>
-            <dd>{formatCreatedAt(room.createdAt)}</dd>
+            <dd>{formatDateTime(room.createdAt)}</dd>
           </div>
         </dl>
 
