@@ -7,6 +7,7 @@ import { RoomsNewPage } from '@/pages/RoomsNewPage'
 import { BookingsPage } from '@/pages/BookingsPage'
 import { BookingDetailPage } from '@/pages/BookingDetailPage'
 import { BookingNewPage } from '@/pages/BookingNewPage'
+import { BookingEditPage } from '@/pages/BookingEditPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="bookings" element={<BookingsPage />} />
           <Route path="bookings/new" element={<BookingNewPage />} />
           <Route path="bookings/:id" element={<BookingDetailPage />} />
+          <Route path="bookings/:id/edit" element={<BookingEditPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
