@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { createRoom } from '@/api/rooms'
-import type { RoomCreate } from '@/types'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getRoom, updateRoom } from '@/api/rooms'
+import type { RoomUpdate } from '@/types'
 import { ApiError } from '@/api/client'
 import '@/pages/RoomsNewPage.css'
 
@@ -19,16 +19,66 @@ interface FieldErrors {
   description?: string
 }
 
-export function RoomsNewPage() {
+export function RoomEditPage() {
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const roomId = id != null ? parseInt(id, 10) : NaN
+  const isValidId = Number.isFinite(roomId) && roomId > 0
+
   const [name, setName] = useState('')
-  const [capacity, setCapacity] = useState<number | ''>(100)
+  const [capacity, setCapacity] = useState<number | ''>('')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
   const [isAvailable, setIsAvailable] = useState(true)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    if (!isValidId) {
+      setNotFound(true)
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+    setApiError(null)
+    setNotFound(false)
+
+    getRoom(roomId)
+      .then((room) => {
+        if (cancelled) return
+        setName(room.name)
+        setCapacity(room.capacity)
+        setLocation(room.location)
+        setDescription(room.description ?? '')
+        setIsAvailable(room.isAvailable)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        if (err instanceof ApiError && err.status === 404) {
+          setNotFound(true)
+        } else {
+          const message =
+            err instanceof ApiError
+              ? err.body?.message ?? err.message
+              : err instanceof Error
+                ? err.message
+                : 'Gagal memuat data ruangan.'
+          setApiError(message)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [roomId, isValidId])
 
   function validate(): boolean {
     const errors: FieldErrors = {}
@@ -66,7 +116,7 @@ export function RoomsNewPage() {
     if (!validate()) return
 
     const cap = typeof capacity === 'number' ? capacity : Number(capacity)
-    const payload: RoomCreate = {
+    const payload: RoomUpdate = {
       name: name.trim(),
       capacity: cap,
       location: location.trim(),
@@ -76,15 +126,15 @@ export function RoomsNewPage() {
 
     setSubmitting(true)
     try {
-      const created = await createRoom(payload)
-      navigate(`/rooms/${created.id}`, { replace: true })
+      await updateRoom(roomId, payload)
+      navigate(`/rooms/${roomId}`, { replace: true })
     } catch (err) {
       const message =
         err instanceof ApiError
           ? err.body?.message ?? err.message
           : err instanceof Error
             ? err.message
-            : 'Gagal menyimpan ruangan.'
+            : 'Gagal menyimpan perubahan.'
       setApiError(message)
     } finally {
       setSubmitting(false)
@@ -100,15 +150,71 @@ export function RoomsNewPage() {
     if (!Number.isNaN(num)) setCapacity(num)
   }
 
+  if (!isValidId || notFound) {
+    return (
+      <div className="room-form-page">
+        <div className="room-form-page__header">
+          <Link to="/rooms" className="room-form-page__back">
+            ← Kembali
+          </Link>
+        </div>
+        <div className="room-form-page__card">
+          <h1 className="room-form-page__title">Ruangan tidak ditemukan</h1>
+          <p>Ruangan yang Anda cari tidak ada atau telah dihapus.</p>
+          <Link to="/rooms" className="room-form__btn room-form__btn--primary">
+            Kembali ke daftar ruangan
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="room-form-page">
+        <div className="room-form-page__header">
+          <Link to="/rooms" className="room-form-page__back">
+            ← Kembali
+          </Link>
+        </div>
+        <div className="room-form-page__card">
+          <p style={{ margin: 0, textAlign: 'center' }}>
+            Memuat data ruangan…
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (apiError && !name && !location) {
+    return (
+      <div className="room-form-page">
+        <div className="room-form-page__header">
+          <Link to="/rooms" className="room-form-page__back">
+            ← Kembali
+          </Link>
+        </div>
+        <div className="room-form-page__card">
+          <div className="room-form-page__api-error" role="alert">
+            {apiError}
+          </div>
+          <Link to="/rooms" className="room-form__btn room-form__btn--primary">
+            Kembali ke daftar ruangan
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="room-form-page">
       <div className="room-form-page__header">
-        <Link to="/rooms" className="room-form-page__back">
+        <Link to={`/rooms/${roomId}`} className="room-form-page__back">
           ← Kembali
         </Link>
       </div>
       <div className="room-form-page__card">
-        <h1 className="room-form-page__title">Tambah Ruangan</h1>
+        <h1 className="room-form-page__title">Edit Ruangan</h1>
 
         {apiError && (
           <div className="room-form-page__api-error" role="alert">
@@ -223,9 +329,12 @@ export function RoomsNewPage() {
               className="room-form__btn room-form__btn--primary"
               disabled={submitting}
             >
-              {submitting ? 'Menyimpan…' : 'Simpan'}
+              {submitting ? 'Menyimpan…' : 'Simpan perubahan'}
             </button>
-            <Link to="/rooms" className="room-form__btn room-form__btn--secondary">
+            <Link
+              to={`/rooms/${roomId}`}
+              className="room-form__btn room-form__btn--secondary"
+            >
               Batal
             </Link>
           </div>
