@@ -1,161 +1,115 @@
-## 2026-SPRK-frontend
+# 2026-SPRK Frontend
 
-Aplikasi frontend untuk **Sistem Peminjaman Ruangan Kampus (SPRK)**, dibangun dengan **React + TypeScript (Vite)**.  
-Frontend ini menjadi antarmuka pengguna untuk mengelola **ruangan** dan **peminjaman (bookings)** yang disediakan oleh backend ASP.NET.
-
-### Fitur utama
-
-- **Manajemen Ruangan**
-  - Lihat daftar ruangan dengan informasi kapasitas, lokasi, deskripsi, dan status ketersediaan.
-  - Tambah, edit, dan hapus ruangan dengan validasi yang selaras dengan backend.
-
-- **Manajemen Peminjaman (Bookings)**
-  - Daftar peminjaman dengan filter (peminjam, ruangan, status, tanggal) dan opsi pengurutan.
-  - Detail peminjaman: informasi ruangan, peminjam, keperluan, waktu mulai/selesai, status, dan tanggal dibuat.
-  - Form tambah & edit peminjaman dengan validasi (waktu selesai > waktu mulai, panjang teks, dsb.).
-  - Perubahan status peminjaman (Disetujui, Ditolak, Dibatalkan) langsung dari list maupun halaman detail, dengan aturan transisi yang aman.
-
-- **Pengalaman Pengguna (UX)**
-  - Pola loading & error konsisten di semua halaman (spinner, pesan error, tombol \"Coba lagi\").
-  - Empty state yang jelas untuk list kosong.
-  - Format tanggal/waktu konsisten menggunakan locale Indonesia dan zona waktu Asia/Jakarta (WIB).
+Aplikasi frontend untuk **Sistem Peminjaman Ruangan Kampus (SPRK)**, dibangun dengan **React + TypeScript + Vite**.
 
 ---
 
-## Teknologi yang digunakan
+## Tech Stack
 
-- **React** + **TypeScript**
-- **Vite** sebagai bundler/dev server
-- **React Router** untuk routing SPA
-- **CSS modular per halaman** (file `.css` di `src/pages/` dan `src/components/`)
-- **Fetch wrapper custom** (`src/api/client.ts`) untuk komunikasi HTTP ke backend ASP.NET
-
-Backend yang diharapkan (di repo terpisah, tidak termasuk dalam project ini):
-
-- ASP.NET Web API dengan endpoint utama:
-  - `GET/POST/PUT/DELETE /api/Rooms`
-  - `GET/POST/PUT/DELETE /api/Bookings`
-  - `PATCH /api/Bookings/{id}/status`
+| Layer       | Technology                                          |
+|-------------|-----------------------------------------------------|
+| Framework   | React 19 + TypeScript                               |
+| Build Tool  | Vite 7                                              |
+| Routing     | React Router DOM v7                                 |
+| HTTP Client | Native `fetch` (wrapper in `src/api/client.ts`)     |
+| Linting     | ESLint + typescript-eslint                          |
+| Formatting  | Prettier                                            |
+| Containerization | Docker + Nginx (production/Docker mode)        |
 
 ---
 
-## Struktur direktori singkat
+## Project Structure
 
-- `src/App.tsx` ? entry routing utama.
-- `src/components/Layout.tsx` ? layout global (header + konten).
-- `src/api/` ? HTTP client dan wrapper untuk `rooms` & `bookings`.
-- `src/pages/RoomsPage.tsx` ? list ruangan.
-- `src/pages/RoomDetailPage.tsx` ? detail ruangan.
-- `src/pages/RoomsNewPage.tsx` ? form tambah ruangan.
-- `src/pages/RoomEditPage.tsx` ? form edit ruangan.
-- `src/pages/BookingsPage.tsx` ? list peminjaman dengan filter & sort.
-- `src/pages/BookingDetailPage.tsx` ? detail peminjaman + aksi status.
-- `src/pages/BookingNewPage.tsx` ? form tambah peminjaman.
-- `src/pages/BookingEditPage.tsx` ? form edit peminjaman.
-- `src/types/index.ts` ? tipe TypeScript bersama (Room, Booking, dst.).
-- `src/utils/datetime.ts` ? utilitas format tanggal/waktu konsisten.
-
----
-
-## Persyaratan sistem
-
-- **Node.js**: versi LTS terbaru (disarankan ? 18)
-- **npm** atau **pnpm/yarn** (contoh di bawah menggunakan `npm`)
-- Backend ASP.NET berjalan di suatu URL (contoh: `http://localhost:5000`)
+```
+src/
+├── api/              ← HTTP client & per-resource API functions
+│   ├── client.ts     ← Base fetch wrapper (ApiError, get, post, put, patch, del)
+│   ├── rooms.ts      ← Rooms CRUD API calls
+│   └── bookings.ts   ← Bookings CRUD + filter API calls
+├── components/       ← Shared UI components
+│   ├── Layout.tsx    ← App shell (header + nav + <Outlet />)
+│   └── AppErrorBoundary.tsx
+├── pages/            ← Route-level page components
+│   ├── RoomsPage, RoomDetailPage, RoomsNewPage, RoomEditPage
+│   └── BookingsPage, BookingDetailPage, BookingNewPage, BookingEditPage
+├── types/
+│   └── index.ts      ← TypeScript types mirroring backend DTOs
+└── utils/
+```
 
 ---
 
-## Konfigurasi environment
+## Running Locally (without Docker)
 
-Aplikasi membaca base URL backend dari **environment variable Vite**:
+### Prerequisites
+- Node.js ≥ 20
+- Backend running at `http://localhost:5006` (see `2026-SPRK-backend`)
 
-- `VITE_API_BASE_URL` ? URL dasar API backend, misalnya:
-  - Saat dev lokal: `http://localhost:5000`
-  - Saat menggunakan reverse proxy: `/api` (kalau di-proxy lewat Vite atau Nginx)
-
-Langkah konfigurasi:
-
-1. Salin file contoh (jika tersedia) atau buat file `.env` di root project:
-
-   ```bash
-   # di folder 2026-SPRK-frontend
-   cp .env.example .env    # jika ada
-   ```
-
-2. Edit `.env` dan set nilai yang sesuai, misalnya:
-
-   ```bash
-   VITE_API_BASE_URL=http://localhost:5000
-   ```
-
-3. Pastikan backend ASP.NET dapat diakses dari alamat tersebut.
-
----
-
-## Instalasi dependencies
-
-Jalankan perintah berikut di root project frontend (`2026-SPRK-frontend`):
+### Setup
 
 ```bash
+# 1. Install dependencies
 npm install
+
+# 2. Copy env file (already exists — skip if .env is present)
+cp .env.example .env
+
+# 3. Start dev server
+npm run dev
 ```
 
-Ini akan menginstal semua dependencies yang diperlukan oleh Vite + React + TypeScript.
+The app will be available at **http://localhost:5173**.
+
+> **Proxy**: `vite.config.ts` proxies all `/api/*` requests to `VITE_API_BASE_URL` (default: `http://localhost:5006`).
+> This means CORS is handled automatically — you don't need to configure anything extra.
 
 ---
 
-## Menjalankan aplikasi (development)
+## Running via Docker (recommended)
 
-1. Pastikan backend ASP.NET berjalan dan dapat diakses dari URL yang sesuai dengan `VITE_API_BASE_URL`.
-2. Jalankan dev server Vite:
-
-   ```bash
-   npm run dev
-   ```
-
-3. Buka browser ke alamat yang ditampilkan (biasanya `http://localhost:5173`).
-
-Perubahan pada kode akan otomatis ter-reflect berkat hot module replacement (HMR).
-
----
-
-## Build untuk produksi
-
-Untuk membuat build produksi static assets:
+Use the infrastructure repo to launch everything together:
 
 ```bash
-npm run build
+# From 2026-SPRK-infrastructure/
+make dev
 ```
 
-Output akan dihasilkan di folder `dist/`. Anda dapat menyajikan folder ini menggunakan server static apa pun (Nginx, Apache, file server, dsb.).
-
-Untuk menguji build secara lokal:
-
-```bash
-npm run preview
-```
+See [`2026-SPRK-infrastructure/README.md`](../2026-SPRK-infrastructure/README.md) for full instructions.
 
 ---
 
-## Testing & kualitas kode
+## Environment Variables
 
-Project ini saat ini belum memiliki setup testing otomatis yang lengkap di frontend. Jika ingin menambahkannya, disarankan menggunakan **Vitest** atau **Jest** + **Testing Library**.
+| Variable            | Default                  | Description                                     |
+|---------------------|--------------------------|-------------------------------------------------|
+| `VITE_API_BASE_URL` | `http://localhost:5006`  | Backend API base URL used by the Vite proxy     |
 
-Namun, beberapa hal yang sudah diperhatikan dalam implementasi:
-
-- Penanganan error API konsisten dengan `ApiError` (lihat `src/api/client.ts`).
-- Validasi form di sisi klien sudah disejajarkan dengan aturan backend (panjang teks, rentang kapasitas, relasi waktu, dll.).
-- Pola loading/error/empty state seragam di semua halaman data (Rooms & Bookings).
+> In **Docker/production**, `VITE_API_BASE_URL` is baked into the Nginx image at build time via `docker-compose ARG`.
 
 ---
 
-## Catatan integrasi dengan repositori lain
+## Available Scripts
 
-- **Backend**: Pastikan project backend (`2026-SPRK-backend` atau nama lain) dikonfigurasi untuk mengizinkan CORS dari origin frontend (mis. `http://localhost:5173`).
-- **Infrastructure**: Jika Anda memiliki repo terpisah seperti `2026-sprk-infrastructure`, Anda dapat menjalankan frontend dan backend melalui Docker Compose dari sana. Dalam kasus tersebut, sesuaikan `VITE_API_BASE_URL` dengan service name backend di Docker network (mis. `http://backend:5000`).
+| Command              | Description                        |
+|----------------------|------------------------------------|
+| `npm run dev`        | Start Vite dev server (port 5173)  |
+| `npm run build`      | TypeScript check + production build |
+| `npm run preview`    | Preview production build locally   |
+| `npm run lint`       | Run ESLint                         |
+| `npm run format`     | Format code with Prettier          |
+| `npm run format:check` | Check formatting without writing |
 
 ---
 
-## Lisensi
+## API Integration
 
-(Tuliskan di sini jenis lisensi jika ada, misalnya MIT. Jika belum ditentukan oleh tugas, bagian ini bisa dibiarkan sebagai catatan untuk pengembangan selanjutnya.)
+All API calls go through `src/api/client.ts`:
+- Errors from the backend (4xx/5xx) are thrown as typed `ApiError` instances.
+- The base URL is read from `VITE_API_BASE_URL` at build time (Vite bakes it in).
+- During local dev, the Vite proxy forwards `/api/*` to the backend, so the browser always calls `localhost:5173/api/...`.
+
+---
+
+## License
+
+UNLICENSED (internal project).
